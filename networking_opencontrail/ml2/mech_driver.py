@@ -16,7 +16,7 @@
 from oslo_log import log as logging
 
 import networking_opencontrail.drivers.drv_opencontrail as drv
-from neutron.plugins.ml2 import driver_api as api
+from neutron_lib.plugins.ml2 import api
 
 import opencontrail_sg_callback
 
