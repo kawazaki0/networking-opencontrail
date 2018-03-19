@@ -12,8 +12,13 @@ contrail_interface:
 # IP address for Openstack VM (e.g. 192.168.0.3)
 openstack_ip:
 
-# Openstack branch used on VMs.
+# [Optional] If not specified default value 8082 will be used.
+#contrail_port: 8082
+
+# [Required] Openstack branch used on VMs.
 openstack_branch: stable/ocata
+# [Required] OpenContrail branch to build on VM.
+contrail_branch:
 
 # If true, then install networking_bgpvpn plugin with contrail driver
 install_networking_bgpvpn_plugin: false

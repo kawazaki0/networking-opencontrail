@@ -16,14 +16,15 @@
 from oslo_log import log as logging
 
 import networking_opencontrail.drivers.drv_opencontrail as drv
-from neutron_lib.plugins.ml2 import api
+from neutron._i18n import _LE
+from neutron.plugins.ml2 import driver_api
 
 from networking_opencontrail.ml2 import opencontrail_sg_callback
 
 LOG = logging.getLogger(__name__)
 
 
-class OpenContrailMechDriver(api.MechanismDriver):
+class OpenContrailMechDriver(driver_api.MechanismDriver):
     """Main ML2 Mechanism driver from OpenContrail.
 
     This driver deals with all resources managed through ML2
@@ -48,7 +49,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.create_network(context._plugin_context, network)
         except Exception:
-            LOG.exception("Create Network Failed")
+            LOG.exception(_LE("Create Network Failed"))
 
     def delete_network_precommit(self, context):
         pass
@@ -59,7 +60,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.delete_network(context._plugin_context, network['id'])
         except Exception:
-            LOG.exception("Delete Network Failed")
+            LOG.exception(_LE("Delete Network Failed"))
 
     def update_network_precommit(self, context):
         pass
@@ -71,7 +72,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
             self.drv.update_network(context._plugin_context,
                                     network['network']['id'], network)
         except Exception:
-            LOG.exception("Update Network Failed")
+            LOG.exception(_LE("Update Network Failed"))
 
     def create_subnet_precommit(self, context):
         pass
@@ -82,7 +83,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.create_subnet(context._plugin_context, subnet)
         except Exception:
-            LOG.exception("Create Subnet Failed")
+            LOG.exception(_LE("Create Subnet Failed"))
 
     def delete_subnet_precommit(self, context):
         pass
@@ -93,7 +94,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.delete_subnet(context._plugin_context, subnet['id'])
         except Exception:
-            LOG.exception("Delete Subnet Failed")
+            LOG.exception(_LE("Delete Subnet Failed"))
 
     def update_subnet_precommit(self, context):
         pass
@@ -105,7 +106,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
             self.drv.update_subnet(context._plugin_context,
                                    subnet['subnet']['id'], subnet)
         except Exception:
-            LOG.exception("Update Subnet Failed")
+            LOG.exception(_LE("Update Subnet Failed"))
 
     def create_port_precommit(self, context):
         pass
@@ -121,7 +122,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.create_port(context._plugin_context, port)
         except Exception:
-            LOG.exception("Create Port Failed")
+            LOG.exception(_LE("Create Port Failed"))
 
     def update_port_precommit(self, context):
         pass
@@ -138,7 +139,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
             self.drv.update_port(context._plugin_context,
                                  port['port']['id'], port)
         except Exception:
-            LOG.exception("Update port Failed")
+            LOG.exception(_LE("Update port Failed"))
 
     def delete_port_precommit(self, context):
         pass
@@ -154,14 +155,14 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.delete_port(context._plugin_context, port['id'])
         except Exception:
-            LOG.exception("Delete Port Failed")
+            LOG.exception(_LE("Delete Port Failed"))
 
     def bind_port(self, context):
         """Bind port in OpenContrail."""
         try:
             self.drv.bind_port(context)
         except Exception:
-            LOG.exception("Bind Port Failed")
+            LOG.exception(_LE("Bind Port Failed"))
 
     def create_security_group(self, context, sg):
         """Create a Security Group in OpenContrail."""
@@ -173,7 +174,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.create_security_group(context, sec_g)
         except Exception:
-            LOG.exception('Failed to create Security Group %s' % sg)
+            LOG.exception(_LE('Failed to create Security Group %s') % sg)
 
     def delete_security_group(self, context, sg):
         """Delete a Security Group from OpenContrail."""
@@ -181,7 +182,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.delete_security_group(context, sg_id)
         except Exception:
-            LOG.exception('Failed to delete Security Group %s' % sg_id)
+            LOG.exception(_LE('Failed to delete Security Group %s') % sg_id)
 
     def update_security_group(self, context, sg_id, sg):
         """Update a Security Group in OpenContrail."""
@@ -189,7 +190,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.update_security_group(context, sg_id, sec_g)
         except Exception:
-            LOG.exception('Failed to update Security Group %s' % sg_id)
+            LOG.exception(_LE('Failed to update Security Group %s') % sg_id)
 
     def create_security_group_rule(self, context, sgr):
         """Create a Security Group Rule in OpenContrail."""
@@ -197,11 +198,12 @@ class OpenContrailMechDriver(api.MechanismDriver):
         try:
             self.drv.create_security_group_rule(context, sgr_r)
         except Exception:
-            LOG.exception('Failed to create Security Group rule %s' % sgr)
+            LOG.exception(_LE('Failed to create Security Group rule %s') % sgr)
 
     def delete_security_group_rule(self, context, sgr_id):
         """Delete a Security Group Rule from OpenContrail."""
         try:
             self.drv.delete_security_group_rule(context, sgr_id)
         except Exception:
-            LOG.exception('Failed to delete Security Group rule %s' % sgr_id)
+            LOG.exception(_LE('Failed to delete Security '
+                              'Group rule %s') % sgr_id)
