@@ -16,20 +16,34 @@ Initial steps
 
 Before you run playbooks perform the following steps:
 
-**1. Prepare machines for Contrail (CentOS) node and OpenStack (Ubuntu) node.**
+**1. Prepare machines for Contrail and OpenStack nodes.**
+
+Let's assume there are two hosts:
+
++-----------+--------------+----------------+--------------+------------------------------------+
+| Node      | OS           | Public IP      | Internal IP  | Notes                              |
++===========+==============+================+==============+====================================+
+| openstack | Ubuntu 16.04 | 10.100.0.3     | 192.168.0.3  | setup by playbooks                 |
++-----------+--------------+----------------+--------------+------------------------------------+
+| contrail  | CentOS 7.4   | 10.100.0.2     | 192.168.0.2  | setup by contrail-ansible-deployer |
++-----------+--------------+----------------+--------------+------------------------------------+
 
 **2. Make sure you have key-based SSH access to prepared nodes**
 
 .. code-block:: console
 
-    $ ssh contrail-node
-    $ ssh openstack-node
+    $ ssh 10.100.0.2
+    $ ssh 10.100.0.3
 
 **3. Install Ansible on your host**
 
+It is required to install Ansible in version 2.5 or higher.
+
 .. code-block:: console
 
-    $ sudo apt install ansible
+    $ sudo add-apt-repository ppa:ansible/ansible
+    $ sudo apt update
+    $ sudo apt install python-netaddr ansible
 
 
 *******************
@@ -60,19 +74,19 @@ Change ``contrail-node`` and ``openstack-node`` to public IP of your machines.
 
     $ vim playbooks/group_vars/all.yml
 
-``contrail_ip`` and ``openstack_ip`` should be local IP addresses.
+``contrail_ip`` and ``openstack_ip`` should be internal IP addresses.
 
-``openstack_branch`` and ``contrail_branch`` may be set to any valid
-branches but it is highly recommended to use only stable branches.
+``openstack_branch`` should be set to ``stable/ocata``
+``contrail_branch`` is currently ignored but it must not be empty.
 
 Example config:
 
 .. code-block:: yaml
 
     # [Required] IP address for OpenConrail VM.
-    contrail_ip: 192.168.0.9
+    contrail_ip: 192.168.0.2
     # [Required] IP address for Openstack VM.
-    openstack_ip: 192.168.0.8
+    openstack_ip: 192.168.0.3
 
     # [Required] Openstack branch used on VMs.
     openstack_branch: stable/ocata
@@ -83,10 +97,6 @@ Example config:
     kernel_version: 4.4.0-112
 
 **3. Enable networking-opencontrail plugin**
-
-.. note:: Plugin branch should be the same as OpenStack.
-          For example if openstack_branch is ``stable/ocata``
-          plugin also should point to ``stable/ocata`` branch.
 
 Update ``openstack_local.conf.j2`` template.
 
@@ -103,38 +113,25 @@ At the end of file add new line with ``enable_plugin`` directive.
 
     enable_plugin networking-opencontrail https://github.com/openstack/networking-opencontrail stable/ocata
 
+.. note:: Plugin branch should be the same as OpenStack.
+          For example if openstack_branch is ``stable/ocata``
+          plugin also should point to ``stable/ocata`` branch.
+
 
 **********
 Deployment
 **********
-
-Let's assume there are two hosts:
-
-+-----------+--------------+----------------+--------------+------------------------------------+
-| Node      | OS           | Public ip      | Internal ip  | Notes                              |
-+===========+==============+================+==============+====================================+
-| openstack | Ubuntu 16.04 | 10.100.0.3     | 192.168.0.3  | setup by playbooks                 |
-+-----------+--------------+----------------+--------------+------------------------------------+
-| contrail  | CentOS 7.4   | 10.100.0.2     | 192.168.0.2  | setup by contrail-ansible-deployer |
-+-----------+--------------+----------------+--------------+------------------------------------+
-
 
 Openstack node
 ==============
 
 .. note:: Before openstack deployment make sure Playbooks are configured.
 
-Run playbooks with command:
+Execute ``main.yml`` file from playbooks directory:
 
 .. code-block:: console
 
-    $ ./main.yml --limit=openstack
-
-Or in case shebang has not been correctly recognized
-
-.. code-block:: console
-
-    $ ansible-playbook ./main.yml --limit=openstack
+    $ ./playbooks/main.yml
 
 
 Contrail node
@@ -187,11 +184,11 @@ Example config:
     contrail_configuration:
       CONTAINER_REGISTRY: opencontrailnightly
       CONTRAIL_VERSION: latest
-      CONTROLLER_NODES: 192.168.0.2  # contrail node local IP
+      CONTROLLER_NODES: 192.168.0.2  # contrail node internal IP
       CLOUD_ORCHESTRATOR: openstack
       AUTH_MODE: keystone
       KEYSTONE_AUTH_ADMIN_PASSWORD: admin
-      KEYSTONE_AUTH_HOST: 192.168.0.3  # openstack node local IP
+      KEYSTONE_AUTH_HOST: 192.168.0.3  # openstack node internal IP
       RABBITMQ_NODE_PORT: 5673
       PHYSICAL_INTERFACE: eth1
       VROUTER_GATEWAY: 192.168.0.1
@@ -204,6 +201,8 @@ Example config:
         webui:
         analytics:
         analyticsdb:
+        analytics_database:
+        vrouter:
 
 **4. Run ansible playbook**
 
