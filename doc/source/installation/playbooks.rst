@@ -153,12 +153,14 @@ Edit hosts file
 
     $ vim inventory/hosts
 
-Copy and paste snippet and change IP to Contrail machine public IP
+Copy and paste snippet at the end of the file and change IP to Contrail machine public IP
 
 .. code-block:: text
 
-    [container_hosts]
-    10.100.0.2 ansible_user=centos
+    container_hosts:
+      hosts:
+        10.100.0.2:
+          ansible_user: centos
 
 **3. Contrail nightly builds variables**
 
@@ -208,4 +210,5 @@ Example config:
 
 .. code-block:: console
 
-    $ ansible-playbook -e '{"CREATE_CONTAINERS":true}' -i inventory/ playbooks/deploy.yml
+    $ ansible-playbook -i inventory/ playbooks/configure_instances.yml
+    $ ansible-playbook -i inventory/ -e orchestrator=openstack playbooks/install_contrail.yml
