@@ -180,12 +180,18 @@ Edit inventory variables:
 
 .. code-block:: console
 
-    $ vim inventory/group_vars/container_hosts.yml
+    $ vim config/instances.yaml
 
 Example config:
 
 .. code-block:: yaml
 
+    provider_config:
+      bms:
+    instances:
+      bms1:
+        provider: bms
+        ip: 10.100.0.2
     contrail_configuration:
       CONTAINER_REGISTRY: opencontrailnightly
       CONTRAIL_VERSION: latest
@@ -197,17 +203,6 @@ Example config:
       RABBITMQ_NODE_PORT: 5673
       PHYSICAL_INTERFACE: eth1
       VROUTER_GATEWAY: 192.168.0.1
-    roles:
-      10.100.0.2: # contrail node public IP
-        configdb:
-        config_database:
-        config:
-        control:
-        webui:
-        analytics:
-        analyticsdb:
-        analytics_database:
-        vrouter:
 
 **4. Run ansible playbook**
 
