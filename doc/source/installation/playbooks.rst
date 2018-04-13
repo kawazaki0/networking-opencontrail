@@ -127,11 +127,14 @@ Openstack node
 
 .. note:: Before openstack deployment make sure Playbooks are configured.
 
-Execute ``main.yml`` file from playbooks directory:
+Execute ``playbooks/main.yml`` file.
+Make sure you are in playbooks directory before executing playbook.
+This will make Ansible to use local ``hosts`` file instead of system broad defined hosts.
 
 .. code-block:: console
 
-    $ ./playbooks/main.yml
+    $ cd playbooks
+    $ ./main.yml
 
 
 Contrail node
