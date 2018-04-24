@@ -120,6 +120,8 @@ class OpenContrailDrivers(driver_base.OpenContrailDriversBase):
                                      headers=headers,
                                      verify=self._apicertbundle)
         else:
+            LOG.debug("\n\nREQUEST:\nURL: %s\n\nHEADERS: %s\n\nDATA: %s\n\n" % (
+                url, str(headers), str(data)))
             response = requests.post(url, data=data, headers=headers)
         if (response.status_code == requests.codes.unauthorized):
             # Get token from keystone and save it for next request
@@ -150,6 +152,8 @@ class OpenContrailDrivers(driver_base.OpenContrailDriversBase):
                 response = self._request_api_server(url, data, auth_headers)
             else:
                 raise RuntimeError('Authentication Failure')
+        LOG.debug("\n\nRESPONSE:\nSTATUS: %s\n\nCONTENT: %s\n\n" % (
+            response.status_code, str(response.content)))
         return response
 
     def _request_api_server_authn(self, url, data=None, headers=None):
