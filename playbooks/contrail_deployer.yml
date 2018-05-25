@@ -1,0 +1,159 @@
+- hosts: contrail
+  tasks:
+    - name: change password
+      become: yes
+      shell: echo "centos:uberpass1" | chpasswd
+#    - name: Remove existing docker
+#      become: yes
+#      yum:
+#        name: "{{ item }}"
+#        state: removed
+#      with_items:
+#        - docker
+#        - docker-common
+#        - docker-selinux
+#        - docker-engine
+    - name: Install required utilities
+      become: yes
+      yum:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - yum-utils
+        - epel-release
+        - device-mapper-persistent-data
+        - lvm2
+        - python-devel
+        - gcc
+        - git
+#        - ack
+        - curl
+        - wget
+#        - jq
+        - patch
+        - ansible-2.4.*
+
+    - name: Fetch devstack
+      git:
+        repo: "https://github.com/openstack-dev/devstack.git"
+        dest: ~/devstack
+        version: "{{ openstack_branch }}"
+        accept_hostkey: yes
+        force: yes
+    - name: Put local.conf
+      template:
+        src: compute_local.conf.j2
+        dest: ~/devstack/local.conf
+    - name: stack.sh
+      shell: ./unstack.sh; ./stack.sh
+      args:
+        chdir: ~/devstack
+
+    - name: Add docker-ce repository
+      become: yes
+      shell: |
+        yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    - name: Install docker
+      become: yes
+      yum:
+        name: docker-ce
+        state: present
+    - name: Change docker bip
+      become: yes
+      shell: |
+        mkdir -p /etc/docker
+        echo '{"bip": "10.255.0.1/16"}' > /etc/docker/daemon.json
+    - name: Start docker daemon
+      become: yes
+      service:
+        name: docker
+        state: running
+        enabled: yes
+    - name: Add user to docker group
+      become: yes
+      user:
+        name: centos
+        groups: docker
+        append: yes
+    - name: Install PIP
+      become: yes
+      yum:
+        name: python-pip
+        state: present
+    - name: install docker and docker-compose for python
+      pip:
+        name: "{{ item }}"
+        state: present
+        extra_args: --user
+      with_items:
+        - docker-py==1.10.6
+        - docker-compose==1.9.0
+    # Dirty ugly workaround on contrail-ansible-deployer not using 'become' in playbooks
+    - name: Create directories for contrail
+      shell: |
+        set -e
+        set -x
+        sudo mkdir -p /var/log/contrail
+        sudo mkdir -p /etc/contrail
+        sudo chmod 777 /var/log/contrail /etc/contrail
+    - name: update kernel
+      become: yes
+      yum:
+        name: kernel
+        state: latest
+    # Contrail Ansible Deployer
+    - name: Create ssh key and add to authorized_key for centos user
+      shell: |
+        set -e
+        set -x
+        yes | ssh-keygen -t rsa -N '' -f ~/.ssh/centos_rsa
+        cat ~/.ssh/centos_rsa.pub | tee --append ~/.ssh/authorized_keys
+        chmod 700 ~/.ssh
+        chmod 600 ~/.ssh/centos_rsa ~/.ssh/authorized_keys
+    - name: Clone 'contrail-ansible-deployer' repository
+      git:
+        clone: yes
+        force: yes
+        dest: ~/contrail-ansible-deployer
+        repo: https://github.com/Juniper/contrail-ansible-deployer.git
+    - name: Clone 'contrail-kolla-ansible' repository
+      git:
+        clone: yes
+        dest: ~/contrail-kolla-ansible
+        repo: https://github.com/Juniper/contrail-kolla-ansible.git
+    - name: Checkout 'contrail-ansible-deployer' repository
+      shell: |
+        cd ~/contrail-ansible-deployer
+        git checkout 38a0b84ec7a5f4c2a1b8b8c9c36b007dc8477b1f
+    - name: Update hosts file
+      template:
+        src: hosts.j2
+        dest: ~/contrail-ansible-deployer/inventory/hosts
+    - name: Update instances.yaml file
+      template:
+        src: instances.yaml.j2
+        dest: ~/contrail-ansible-deployer/config/instances.yaml
+    - name: Provision Node before deploy contrail
+      shell: |
+        set -e
+        set -x
+        cd ~/contrail-ansible-deployer/
+        ansible-playbook -vv \
+                         -e skip_openstack=true \
+                         -i inventory/ playbooks/configure_instances.yml
+    - name: Deploy OpenContrail
+      shell: |
+        set -e
+        set -x
+        cd ~/contrail-ansible-deployer/
+        ansible-playbook -vv \
+                         -e skip_openstack=true \
+                         -e '{"CREATE_CONTAINERS":true}' \
+                         -e orchestrator=openstack \
+                         -i inventory/ playbooks/install_contrail.yml
+    - name: Wait for contrail until fully running
+      wait_for:
+        sleep: 5
+        host: "{{ contrail_ip }}"
+        port: 8082
+        timeout: 300
