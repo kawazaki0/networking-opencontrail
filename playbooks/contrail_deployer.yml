@@ -33,6 +33,21 @@
         - patch
         - ansible-2.4.*
 
+    - name: update kernel
+      become: yes
+      yum:
+        name: kernel
+        state: latest
+
+    - name: Reboot the machine
+      become: yes
+      shell: nohup bash -c "sleep 2s && shutdown -r now" &
+
+    - name: Wait for machine to come back
+      wait_for_connection:
+        timeout: 240
+        delay: 20
+
     - name: Fetch devstack
       git:
         repo: "https://github.com/openstack-dev/devstack.git"
@@ -40,14 +55,33 @@
         version: "{{ openstack_branch }}"
         accept_hostkey: yes
         force: yes
+
+    - name: Fetch devstack requirements
+      become: yes
+      git:
+        repo: "git://git.openstack.org/openstack/requirements.git"
+        dest: /opt/stack/requirements
+        version: "{{ openstack_branch }}"
+        accept_hostkey: yes
+        force: yes
+    - name: Fix libvirt version
+      become: yes
+      shell: sed -i 's/libvirt-python===2.5.0/libvirt-python===3.9.0/' /opt/stack/requirements/upper-constraints.txt
+
     - name: Put local.conf
       template:
         src: compute_local.conf.j2
         dest: ~/devstack/local.conf
-    - name: stack.sh
-      shell: ./unstack.sh; ./stack.sh
+
+    - name: optionally unstack
+      shell: screen -ls | grep stack && ./unstack.sh
       args:
         chdir: ~/devstack
+      ignore_errors: yes
+
+    - name: build OpenStack via stack.sh
+      command: chdir=~/devstack ./stack.sh
+      ignore_errors: no
 
     - name: Add docker-ce repository
       become: yes
@@ -96,11 +130,7 @@
         sudo mkdir -p /var/log/contrail
         sudo mkdir -p /etc/contrail
         sudo chmod 777 /var/log/contrail /etc/contrail
-    - name: update kernel
-      become: yes
-      yum:
-        name: kernel
-        state: latest
+
     # Contrail Ansible Deployer
     - name: Create ssh key and add to authorized_key for centos user
       shell: |
@@ -140,6 +170,7 @@
         cd ~/contrail-ansible-deployer/
         ansible-playbook -vv \
                          -e skip_openstack=true \
+                         -e config_file=~/contrail-ansible-deployer/config/instances.yaml \
                          -i inventory/ playbooks/configure_instances.yml
     - name: Deploy OpenContrail
       shell: |
@@ -148,6 +179,7 @@
         cd ~/contrail-ansible-deployer/
         ansible-playbook -vv \
                          -e skip_openstack=true \
+                         -e config_file=~/contrail-ansible-deployer/config/instances.yaml \
                          -e '{"CREATE_CONTAINERS":true}' \
                          -e orchestrator=openstack \
                          -i inventory/ playbooks/install_contrail.yml
@@ -157,3 +189,13 @@
         host: "{{ contrail_ip }}"
         port: 8082
         timeout: 300
+
+    - name: Copy vrouter
+      become: yes
+      shell: |
+        docker cp vrouter_vrouter-agent_1:/usr/bin/vrouter-port-control /usr/bin/
+
+- hosts: openstack
+  tasks:
+    - name: discover hosts
+      shell: nova-manage cell_v2 discover_hosts

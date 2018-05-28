@@ -14,7 +14,8 @@
 
 # [Required] IP address for OpenConrail VM.
 contrail_ip: 192.168.0.5
-contrail_interface: eth1
+contrail_gateway: 192.168.0.1
+contrail_interface: eth0
 
 # [Required] IP address for Openstack VM.
 openstack_ip: 192.168.0.20

@@ -1,0 +1,3 @@
+---
+- include: devstack_deployer.yml
+- include: contrail_deployer.yml
