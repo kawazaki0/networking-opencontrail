@@ -37,10 +37,11 @@ class IntegrationTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(IntegrationTestCase, self).setUp()
-        controller_ip = os.getenv('CONTROLLER_IP', 'localhost')
+        tungsten_ip = os.getenv('TUNGSTEN_IP', 'localhost')
+        openstack_ip = os.getenv('OPENSTACK_IP', 'localhost')
 
-        self.contrail_api = 'http://{}:8082'.format(controller_ip)
-        self.auth_url = 'http://{}/identity/v3'.format(controller_ip)
+        self.contrail_api = 'http://{}:8082'.format(tungsten_ip)
+        self.auth_url = 'http://{}/identity/v3'.format(openstack_ip)
 
         auth = identity.V3Password(auth_url=self.auth_url,
                                    username='admin', password='admin',
