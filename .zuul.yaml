@@ -1,7 +1,7 @@
 ---
 # TODO(paweł_zadrożny) remove voting:false from all noc-tempest* jobs when all defects are fixed
 - project:
-    name: openstack/networking-opencontrail
+    name: x/networking-opencontrail
     templates:
       - build-openstack-docs-pti
       - openstack-lower-constraints-jobs-neutron
@@ -44,24 +44,24 @@
     post-run: playbooks/zuul/post.yaml
     nodeset: devstack-single-node-centos-7
     roles:
-      - zuul: openstack-dev/devstack
+      - zuul: openstack/devstack
     timeout: 10080
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
       - ^releasenotes/.*$
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/tempest
       - openstack/neutron-tempest-plugin
-      - openstack/networking-opencontrail
+      - x/networking-opencontrail
       - openstack/glance
       - openstack/keystone
       - openstack/neutron
       - openstack/nova
     vars:
       devstack_plugins:
-        networking-opencontrail: https://git.openstack.org/openstack/networking-opencontrail
+        networking-opencontrail: https://opendev.org/x/networking-opencontrail
       devstack_base_dir: /opt/stack
       devstack_localrc:
         DEBUG: true
@@ -198,6 +198,6 @@
             neutron_plugin_options:
               available_type_drivers: vlan,local
       devstack_plugins:
-        networking-opencontrail: https://git.openstack.org/openstack/networking-opencontrail
-        neutron-tempest-plugin: https://git.openstack.org/openstack/neutron-tempest-plugin
+        networking-opencontrail: https://opendev.org/x/networking-opencontrail
+        neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
       tempest_test_regex: (?x)^neutron_tempest_plugin.*$
