@@ -14,6 +14,7 @@
 #
 
 import yaml
+from networking_opencontrail.drivers.rest_driver import ContrailRestApiDriver
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -45,6 +46,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
 
     def initialize(self):
         self.drv = drv.OpenContrailDrivers()
+        self.tf_rest_driver = ContrailRestApiDriver()
         self.sg_handler = (
             opencontrail_sg_callback.OpenContrailSecurityGroupHandler(self))
         self.subnet_handler = (
@@ -139,8 +141,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
             return
 
         try:
-            bindings = self._get_binding_profile(port)
-            port['port'].update(bindings)
+            port['port']['binding:vnic_type'] = 'baremetal'
             self.drv.create_port(context._plugin_context, port)
         except Exception:
             LOG.exception("Create Port Failed")
@@ -156,6 +157,8 @@ class OpenContrailMechDriver(api.MechanismDriver):
             return
 
         try:
+            bindings = self._get_bindings(port)
+            port['port'].update(bindings)
             self.drv.update_port(context._plugin_context,
                                  port['port']['id'], port)
         except Exception:
@@ -226,9 +229,9 @@ class OpenContrailMechDriver(api.MechanismDriver):
         except Exception:
             LOG.exception('Failed to delete Security Group rule %s' % sgr_id)
 
-    def _get_binding_profile(self, port):
-        if 'host_id' in port['port']:
-            host_id = port['port']['host_id']
+    def _get_bindings(self, port):
+        if 'binding:host_id' in port['port']:
+            host_id = port['port']['binding:host_id']
             nodes = [n for n in self.baremetals['nodes'] if
                      n['name'] == host_id]
             if len(nodes) == 1:
@@ -239,6 +242,14 @@ class OpenContrailMechDriver(api.MechanismDriver):
                     'switch_info': node_port['switch_name'],
                     'fabric': node_port['fabric'],
                 }
+
+                pis = self.tf_rest_driver.list_resource('physical-interface', {'parent_fq_name_str': '%s:%s' % ("default-global-system-config", node_port['switch_name'])})
+                pi = [pi for pi in pis[1]['physical-interfaces'] if pi['fq_name'][-1] == node_port['port_name']]
+                if len(pi) == 1:
+                    pi_dict = self.tf_rest_driver.get_resource('physical-interface', None, pi[0]['uuid'])[1]
+                    if 'virtual_port_group_back_refs' in pi_dict['physical-interface'] and len(pi_dict['physical-interface']['virtual_port_group_back_refs']) == 1:
+                        port['port']['binding:vpg'] = pi_dict['physical-interface']['virtual_port_group_back_refs'][0]['to'][-1]
+
                 binding_profile = {'local_link_information': [profile]}
                 vnic_type = 'baremetal'
                 return {
