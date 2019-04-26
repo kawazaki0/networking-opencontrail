@@ -15,11 +15,11 @@
 
 import yaml
 from networking_opencontrail.drivers.rest_driver import ContrailRestApiDriver
-
 from oslo_config import cfg
 from oslo_log import log as logging
 
 import networking_opencontrail.drivers.drv_opencontrail as drv
+from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 
 from networking_opencontrail.l3 import snat_synchronizer
@@ -141,6 +141,8 @@ class OpenContrailMechDriver(api.MechanismDriver):
             return
 
         try:
+            vlan_tag = self._core_plugin.get_network(context._plugin_context, port['port']['network_id'])['provider:segmentation_id']
+            port['port']['virtual_machine_interface_properties'] = {'sub_interface_vlan_tag': vlan_tag}
             port['port']['binding:vnic_type'] = 'baremetal'
             self.drv.create_port(context._plugin_context, port)
         except Exception:
@@ -268,3 +270,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
                       device_owner)
             return True
         return False
+
+    @property
+    def _core_plugin(self):
+        return directory.get_plugin()
