@@ -23,9 +23,14 @@ sys.path.insert(0, os.path.abspath('../..'))
 extensions = [
     'sphinx.ext.autodoc',
     # 'sphinx.ext.intersphinx',
-    'oslosphinx',
+    'openstackdocstheme',
     'sphinxcontrib.fulltoc',
 ]
+
+# openstackdocstheme options
+repository_name = 'x/networking-opencontrail'
+bug_project = 'networking-opencontrail'
+bug_tag = 'doc'
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
 # text edit cycles.
@@ -56,8 +61,8 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 # html_theme_path = ["."]
-# html_theme = '_theme'
 # html_static_path = ['static']
+html_theme = 'openstackdocs'
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = '%sdoc' % project
