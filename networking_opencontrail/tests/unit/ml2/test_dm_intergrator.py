@@ -36,11 +36,17 @@ class DeviceManagerIntegratorTestCase(base.TestCase):
         super(DeviceManagerIntegratorTestCase, self).tearDown()
 
     # Tests to do:
-    # - load topology file on start
-    # - enabled/disabled - due to cfg.topology / topology file
-    # - more definition in topology (if get correct)
     # - get bindings, rest calls: check if calls to TF driver are correct
     # - negative tests
+
+    def test_topology_should_be_validated_on_start(self):
+        self.fail()
+
+    def test_disabling_dm_should_not_modify_port(self):
+        self.fail()
+
+    def test_disabling_dm_should_not_call_tf_driver(self):
+        self.fail()
 
     def test_enable_vlan_taging_on_port(self):
         self._mock_core_get_network()
