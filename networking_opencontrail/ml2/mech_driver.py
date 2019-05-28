@@ -133,7 +133,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
 
         try:
             if self.dm_integrator.enabled:
-                self.dm_integrator.enable_vlan_tag_on_port(
+                self.dm_integrator.add_vlan_tag_on_port(
                     context._plugin_context, port)
             self.drv.create_port(context._plugin_context, port)
         except Exception:

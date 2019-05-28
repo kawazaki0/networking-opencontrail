@@ -41,16 +41,21 @@ class DeviceManagerIntegrator(object):
     def _load_topology_definition(self):
         # TODO(kamman): Topology file should be validate
         if cfg.CONF.APISERVER.topology:
-            with open(cfg.CONF.APISERVER.topology, "r") as topology:
-                return yaml.load(topology)
+            return self._load_yaml_file(cfg.CONF.APISERVER.topology)
         else:
             return {}
 
-    def enable_vlan_tag_on_port(self, context, port):
-        vlan_tag = self._core_plugin.get_network(
-            context, port['port']['network_id'])['provider:segmentation_id']
-        port['port']['virtual_machine_interface_properties'] = {
-            'sub_interface_vlan_tag': vlan_tag}
+    def _load_yaml_file(self, topology_file):
+        with open(topology_file, "r") as topology:
+            return yaml.load(topology)
+
+    def add_vlan_tag_on_port(self, context, port):
+        network_id = port['port']['network_id']
+        network = self._core_plugin.get_network(context, network_id)
+        vlan_tag = network['provider:segmentation_id']
+        vlan_tag_dict = {'sub_interface_vlan_tag': vlan_tag}
+
+        port['port']['virtual_machine_interface_properties'] = vlan_tag_dict
         port['port']['binding:vnic_type'] = DM_MANAGED_VNIC_TYPE
 
     def add_port_binding_to_port(self, port):
