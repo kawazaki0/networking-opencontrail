@@ -14,6 +14,7 @@
 #
 
 import mock
+# import oslo_config
 
 from networking_opencontrail.ml2 import dm_integrator
 from networking_opencontrail.tests import base
@@ -26,10 +27,10 @@ class DeviceManagerIntegratorTestCase(base.TestCase):
         super(DeviceManagerIntegratorTestCase, self).setUp()
         dm_integrator.directory.get_plugin = mock.Mock()
         dm_integrator.ContrailRestApiDriver = mock.Mock()
-        self.dm_integrator = (
-            dm_integrator.DeviceManagerIntegrator())
+        self.dm_integrator = dm_integrator.DeviceManagerIntegrator()
         self.core_plugin = self.dm_integrator._core_plugin
         self.tf_rest_driver = self.dm_integrator.tf_rest_driver
+        self.dm_integrator.topology = self._get_topology()
 
     def tearDown(self):
         super(DeviceManagerIntegratorTestCase, self).tearDown()
@@ -55,7 +56,6 @@ class DeviceManagerIntegratorTestCase(base.TestCase):
         self.assertEqual('baremetal', port_data['binding:vnic_type'])
 
     def test_add_binding_to_first_port_in_vpg(self):
-        self.dm_integrator.topology = self._get_topology()
         self._mock_tf_rest_calls_when_no_vpg()
         port_data = {'binding:host_id': 'compute1'}
 
@@ -71,7 +71,6 @@ class DeviceManagerIntegratorTestCase(base.TestCase):
         self.assertEqual('baremetal', port_data['binding:vnic_type'])
 
     def test_add_binding_and_existing_vpg(self):
-        self.dm_integrator.topology = self._get_topology()
         self._mock_tf_rest_calls_when_vpg_exists()
         port_data = {'binding:host_id': 'compute1'}
 
@@ -88,7 +87,6 @@ class DeviceManagerIntegratorTestCase(base.TestCase):
         self.assertEqual('vpg-1', port_data['binding:vpg'])
 
     def test_not_add_binding_when_host_not_in_topology(self):
-        self.dm_integrator.topology = self._get_topology()
         self.tf_rest_driver = mock.Mock()
 
         port_data = {'binding:host_id': 'invalid-host'}
@@ -100,7 +98,6 @@ class DeviceManagerIntegratorTestCase(base.TestCase):
         self.tf_rest_driver.assert_not_called()
 
     def test_not_add_binding_when_no_host(self):
-        self.dm_integrator.topology = self._get_topology()
         self.tf_rest_driver = mock.Mock()
 
         port_data = {}

@@ -13,13 +13,11 @@
 #    under the License.
 #
 
-import yaml
-
 from neutron_lib.plugins import directory
-from oslo_config import cfg
 from oslo_log import log as logging
 
 from networking_opencontrail.drivers.rest_driver import ContrailRestApiDriver
+from networking_opencontrail.ml2.dm_topology_loader import DmTopologyLoader
 
 LOG = logging.getLogger(__name__)
 
@@ -36,21 +34,16 @@ class DeviceManagerIntegrator(object):
 
     def __init__(self):
         self.tf_rest_driver = ContrailRestApiDriver()
-        self.topology = self._load_topology_definition()
-
-    def _load_topology_definition(self):
-        # TODO(kamman): Topology file should be validate
-        if cfg.CONF.APISERVER.topology:
-            with open(cfg.CONF.APISERVER.topology, "r") as topology:
-                return yaml.load(topology)
-        else:
-            return {}
+        topology_loader = DmTopologyLoader()
+        self.topology = topology_loader.load()
 
     def enable_vlan_tag_on_port(self, context, port):
-        vlan_tag = self._core_plugin.get_network(
-            context, port['port']['network_id'])['provider:segmentation_id']
-        port['port']['virtual_machine_interface_properties'] = {
-            'sub_interface_vlan_tag': vlan_tag}
+        network_id = port['port']['network_id']
+        network = self._core_plugin.get_network(context, network_id)
+        vlan_tag = network['provider:segmentation_id']
+        vlan_tag_dict = {'sub_interface_vlan_tag': vlan_tag}
+
+        port['port']['virtual_machine_interface_properties'] = vlan_tag_dict
         port['port']['binding:vnic_type'] = DM_MANAGED_VNIC_TYPE
 
     def add_port_binding_to_port(self, port):
