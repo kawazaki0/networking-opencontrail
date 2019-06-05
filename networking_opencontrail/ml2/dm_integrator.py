@@ -34,8 +34,10 @@ class DeviceManagerIntegrator(object):
 
     def __init__(self):
         self.tf_rest_driver = ContrailRestApiDriver()
-        topology_loader = DmTopologyLoader()
-        self.topology = topology_loader.load()
+        self.topology_loader = DmTopologyLoader()
+
+    def initialize(self):
+        self.topology = self.topology_loader.load()
 
     def enable_vlan_tag_on_port(self, context, port):
         network_id = port['port']['network_id']

@@ -14,23 +14,27 @@
 #
 
 import mock
-# import oslo_config
 
 from networking_opencontrail.ml2 import dm_integrator
+from networking_opencontrail.ml2.dm_topology_loader import ConfigInvalidFormat
 from networking_opencontrail.tests import base
 
 
 class DeviceManagerIntegratorTestCase(base.TestCase):
     @mock.patch("oslo_config.cfg.CONF",
                 APISERVER=mock.MagicMock(topology=None))
-    def setUp(self, conf):
+    def setUp(self, config):
         super(DeviceManagerIntegratorTestCase, self).setUp()
         dm_integrator.directory.get_plugin = mock.Mock()
         dm_integrator.ContrailRestApiDriver = mock.Mock()
+
         self.dm_integrator = dm_integrator.DeviceManagerIntegrator()
+        self.dm_integrator.topology_loader.load = mock.Mock(
+            return_value=self._get_topology())
+        self.dm_integrator.initialize()
+
         self.core_plugin = self.dm_integrator._core_plugin
         self.tf_rest_driver = self.dm_integrator.tf_rest_driver
-        self.dm_integrator.topology = self._get_topology()
 
     def tearDown(self):
         super(DeviceManagerIntegratorTestCase, self).tearDown()
@@ -39,14 +43,16 @@ class DeviceManagerIntegratorTestCase(base.TestCase):
     # - get bindings, rest calls: check if calls to TF driver are correct
     # - negative tests
 
-    def test_topology_should_be_validated_on_start(self):
-        self.fail()
+    @mock.patch("oslo_config.cfg.CONF")
+    def test_topology_should_be_validated_on_initializing(self, _):
+        self.dm_integrator.topology_loader.load = mock.Mock(side_effect=ConfigInvalidFormat)
+        self.assertRaises(ConfigInvalidFormat, self.dm_integrator.initialize)
 
-    def test_disabling_dm_should_not_modify_port(self):
-        self.fail()
-
-    def test_disabling_dm_should_not_call_tf_driver(self):
-        self.fail()
+    # def test_disabling_dm_should_not_modify_port(self):
+    #     self.fail()
+    #
+    # def test_disabling_dm_should_not_call_tf_driver(self):
+    #
 
     def test_enable_vlan_taging_on_port(self):
         self._mock_core_get_network()

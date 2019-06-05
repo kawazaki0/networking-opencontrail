@@ -48,6 +48,7 @@ class OpenContrailMechDriver(api.MechanismDriver):
         self.subnet_handler = (
             subnet_dns_integrator.SubnetDNSCompatibilityIntegrator(self.drv))
         self.dm_integrator = dm_integrator.DeviceManagerIntegrator()
+        self.dm_integrator.initialize()
         LOG.info("Initialization of networking-opencontrail plugin: COMPLETE")
 
     def create_network_precommit(self, context):

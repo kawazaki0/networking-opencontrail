@@ -41,6 +41,14 @@ class OpenContrailTestCases(testlib_api.SqlTestCase):
     def tearDown(self):
         super(OpenContrailTestCases, self).tearDown()
 
+    def test_initialize(self):
+        load_mock = mock.Mock()
+        self.drv.dm_integrator.initialize = load_mock
+
+        self.drv.initialize()
+
+        load_mock.assert_called_once()
+
     def test_create_network(self):
         network_id = 'test_net1'
         tenant_id = 'ten-1'
